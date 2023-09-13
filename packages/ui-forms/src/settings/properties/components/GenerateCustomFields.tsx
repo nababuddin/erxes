@@ -13,6 +13,7 @@ import React from 'react';
 import Sidebar from '@erxes/ui/src/layout/components/Sidebar';
 import Tip from '@erxes/ui/src/components/Tip';
 import { checkLogic } from '../utils';
+import { setConfig, getConfig } from '@erxes/ui/src/utils/core';
 
 declare const navigator: any;
 
@@ -31,6 +32,7 @@ type Props = {
     callback: (error: Error) => void,
     extraValues?: any
   ) => void;
+  collapseCallback?: () => void;
 };
 
 type State = {
@@ -39,7 +41,7 @@ type State = {
   extraValues?: any;
   currentLocation: ILocationOption;
 };
-
+const STORAGE_KEY = `erxes_sidebar_section_config`;
 class GenerateGroup extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -52,6 +54,17 @@ class GenerateGroup extends React.Component<Props, State> {
   }
 
   async componentDidMount() {
+    if (this.props.fieldGroup.alwaysOpen) {
+      const customField = getConfig(STORAGE_KEY) || {};
+
+      if (customField !== true || !localStorage.getItem(STORAGE_KEY)) {
+        setConfig(STORAGE_KEY, {
+          showCustomFields: true
+        });
+        this.props.collapseCallback && this.props.collapseCallback();
+      }
+    }
+
     if (this.props.fieldGroup.fields.findIndex(e => e.type === 'map') === -1) {
       return;
     }
@@ -458,6 +471,7 @@ class GenerateGroup extends React.Component<Props, State> {
         title={fieldGroup.name}
         name="showCustomFields"
         isOpen={true}
+        callback={this.props.collapseCallback}
       >
         {this.renderContent()}
         {this.renderButtons()}
@@ -524,6 +538,7 @@ class GenerateGroup extends React.Component<Props, State> {
         title={fieldGroup.name}
         name="showCustomFields"
         isOpen={fieldGroup.alwaysOpen}
+        callback={this.props.collapseCallback}
       >
         {this.renderContent()}
         {this.renderButtons()}
@@ -540,6 +555,7 @@ type GroupsProps = {
   loading?: boolean;
   object?: any;
   save: (data: { customFieldsData: any }, callback: () => any) => void;
+  collapseCallback?: () => void;
 };
 
 class GenerateGroups extends React.Component<GroupsProps> {
@@ -644,6 +660,7 @@ class GenerateGroups extends React.Component<GroupsProps> {
           object={this.props.object}
           saveGroup={this.saveGroup}
           save={this.props.save}
+          collapseCallback={this.props.collapseCallback}
         />
       );
     });
